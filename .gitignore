@@ -4,6 +4,10 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 
-# optional, for data files
-*.xlsx
-*.csv
+# ignore data files, but keep data folder documentation
+data/*
+!data/README.md
+
+*.db
+*.sqlite
+*.sqlite3

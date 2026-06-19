@@ -1,0 +1,11 @@
+{
+    "sqltools.useNodeRuntime": "C:\\Program Files\\nodejs\\node.exe",
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "Chinook",
+            "database": "\"C:\\Users\\erenb\\Desktop\\DataScience\\data\\Chinook_Sqlite.sqlite\""
+        }
+    ]
+}
