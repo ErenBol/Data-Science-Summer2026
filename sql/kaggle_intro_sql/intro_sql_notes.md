@@ -657,3 +657,80 @@ Step 2: query from that temporary table
 ## BigQuery note
 
 For large datasets, doing cleaning inside SQL/BigQuery is usually faster than fetching raw data first and cleaning everything in Pandas.
+
+
+# Section 6 — JOIN in BigQuery
+
+## Join two tables
+
+Use `INNER JOIN` to combine rows from two tables when matching values exist in both tables.
+
+```sql
+SELECT 
+    table1.column_name,
+    table2.column_name
+FROM `project.dataset.table1` AS table1
+INNER JOIN `project.dataset.table2` AS table2
+    ON table1.matching_column = table2.matching_column
+```
+
+## Table aliases
+
+Use short aliases to make long BigQuery table names easier to read.
+
+```sql
+FROM `bigquery-public-data.github_repos.sample_files` AS sf
+INNER JOIN `bigquery-public-data.github_repos.licenses` AS L
+```
+
+Then use:
+
+```sql
+sf.repo_name
+L.repo_name
+L.license
+```
+
+## ON condition
+
+`ON` tells BigQuery how to match the two tables.
+
+```sql
+ON sf.repo_name = L.repo_name
+```
+
+This means rows are joined when the `repo_name` values are the same.
+
+## BigQuery JOIN example
+
+```sql
+SELECT 
+    L.license,
+    COUNT(1) AS number_of_files
+FROM `bigquery-public-data.github_repos.sample_files` AS sf
+INNER JOIN `bigquery-public-data.github_repos.licenses` AS L
+    ON sf.repo_name = L.repo_name
+GROUP BY L.license
+ORDER BY number_of_files DESC
+```
+
+## Meaning of the example
+
+```text
+sample_files table → file information
+licenses table     → repo license information
+repo_name          → common column used to match tables
+```
+
+The query counts how many files belong to each license.
+
+## Good habit
+
+When using joins, write column names with table aliases:
+
+```sql
+L.license
+sf.repo_name
+```
+
+This avoids confusion when two tables have columns with the same name.
