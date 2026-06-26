@@ -1,90 +1,65 @@
-# Data Science & SQL Practice
+# Data Science Learning/Development Repository
 
-This repository contains my practice work while learning data science, Python, and SQL.
-It includes Python scripts, Jupyter notebooks, and SQL practice queries using the Chinook SQLite database.
+This repository contains my practice work for Python, data analysis, and SQL.
+
+## Focus Areas
+
+- Python foundations
+- NumPy and Pandas
+- SQL practice
+- BigQuery with Kaggle Learn
+- Dataset exploration and analysis
 
 ## Repository Structure
 
-```text
-DATASCIENCE/
-├── notebooks/              # Jupyter notebooks
-├── python/                 # Python scripts
-├── sql/
-│   └── chinook/            # SQL practice using Chinook SQLite database
-├── data/                   # Local datasets and database files, not pushed
-├── requirements.txt        # Python packages
-├── .gitignore
-└── README.md
-```
+- `sql/` — SQL notes, exercises, and query practice
+- `data/` — local datasets and database files, not pushed
+- `requirements.txt` — Python dependencies
+- `python/` — Python scripts
+- `notebooks/` — Jupyter notebooks for data analysis and exploration
+- `README.md` — this file
 
-## SQL Practice
+## Progress
 
-SQL files are used for practicing database querying and data analysis with the Chinook SQLite database.
+### Python / Data Science
 
-Planned topics:
+- NumPy basics completed
+- Pandas basics completed
 
-* SELECT statements
-* WHERE filtering
-* comparison operators
-* AND / OR conditions
-* LIKE
-* IN
-* BETWEEN
-* IS NULL / IS NOT NULL
-* calculated columns
-* aliases
-* CASE expressions
-* JOIN operations
-* aggregation
-* subqueries
+### SQL
 
+- Chinook SQLite practice started
+- Kaggle Intro to SQL completed
+- Kaggle Advanced SQL in progress
 
-## Python / Data Science Practice
-
-Python files and notebooks are used for practicing basic data analysis skills.
-
-Planned topics:
-
-* pandas
-* numpy
-* matplotlib
-* data cleaning
-* exploratory data analysis
-* working with Excel and CSV files
-
-## Setup
+### Setup
 
 Create a virtual environment:
 
-```bash
-python -m venv .venv
-```
+python -m venv venv
 
 Activate it on Windows:
 
-```bash
-.\.venv\Scripts\activate
-```
+.\venv\Scripts\activate
 
 Install required packages:
 
-```bash
 pip install -r requirements.txt
-```
 
 ## Notes
+Local datasets, database files, virtual environments, and cache files are not pushed to GitHub.
 
-The virtual environment and database files are not pushed to GitHub.
+Ignored examples:
 
-Ignored files include:
-
-```text
+venv/
 .venv/
 *.db
 *.sqlite
 *.sqlite3
 __pycache__/
 .ipynb_checkpoints/
-```
 
-SQL files are pushed to the repository, but the actual Chinook SQLite database file is kept locally.
+Detailed SQL progress is documented in:
+
+```text
+sql/README.md
