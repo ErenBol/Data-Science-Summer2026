@@ -673,3 +673,383 @@ combine results vertically
 Window functions:
 calculate over groups of rows while keeping original rows
 ```
+
+## Section 3 — Nested and Repeated Data
+
+## Nested data
+
+Nested data means one column contains multiple fields inside it.
+
+In BigQuery, nested columns usually have type:
+
+```text
+STRUCT
+RECORD
+```
+
+Example idea:
+
+```text
+Toy
+├── Name
+└── Type
+```
+
+To select fields inside a nested column, use dot notation:
+
+```sql
+SELECT
+    Toy.Name,
+    Toy.Type
+FROM `project.dataset.table`;
+```
+
+Real BigQuery example:
+
+```sql
+SELECT
+    device.browser AS device_browser,
+    SUM(totals.transactions) AS total_transactions
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_20170801`
+GROUP BY device_browser
+ORDER BY total_transactions DESC;
+```
+
+Here:
+
+```text
+device.browser       → browser field inside device STRUCT
+totals.transactions  → transactions field inside totals STRUCT
+```
+
+---
+
+## Repeated data
+
+Repeated data means one column can contain multiple values for one row.
+
+In BigQuery, repeated fields are arrays.
+
+Example idea:
+
+```text
+Toys = [Frisbee, Bone, Rope]
+```
+
+To query repeated data, use:
+
+```sql
+UNNEST()
+```
+
+Basic pattern:
+
+```sql
+SELECT
+    t.field_name
+FROM `project.dataset.table`,
+    UNNEST(repeated_column) AS t;
+```
+
+`UNNEST()` flattens the repeated column so each array item becomes its own row.
+
+---
+
+## Nested + repeated data
+
+A column can be both nested and repeated.
+
+Example:
+
+```text
+Toys = [
+  {Name: "Frisbee", Type: "Flying toy"},
+  {Name: "Bone", Type: "Chew toy"}
+]
+```
+
+Query pattern:
+
+```sql
+SELECT
+    t.Name,
+    t.Type
+FROM `project.dataset.table`,
+    UNNEST(Toys) AS t;
+```
+
+After `UNNEST(Toys) AS t`, nested fields are accessed with:
+
+```text
+t.Name
+t.Type
+```
+
+---
+
+## UNNEST example
+
+Task: find most popular landing pages on the Google Analytics sample website.
+
+```sql
+SELECT
+    hits.page.pagePath AS path,
+    COUNT(hits.page.pagePath) AS counts
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_20170801`,
+    UNNEST(hits) AS hits
+WHERE hits.type = "PAGE"
+  AND hits.hitNumber = 1
+GROUP BY path
+ORDER BY counts DESC;
+```
+
+Important parts:
+
+```text
+hits                         → repeated STRUCT column
+UNNEST(hits) AS hits          → flattens the hits array
+hits.page.pagePath            → nested field inside hits.page
+hits.type = "PAGE"            → keep page hits
+hits.hitNumber = 1            → landing page / first hit
+```
+
+---
+
+## Why BigQuery uses nested/repeated fields
+
+Nested and repeated fields can avoid expensive JOINs.
+
+Instead of storing related information in separate tables, BigQuery can store related fields inside one table.
+
+This can make queries faster and cleaner when the data naturally belongs together.
+
+---
+
+## Section 4 — Writing Efficient Queries
+
+## Main idea
+
+Efficient SQL matters more when:
+
+```text
+the dataset is large
+the query runs often
+the query powers a website/app
+the query scans expensive data
+```
+
+In BigQuery, inefficient queries can scan more data, run slower, and cost more.
+
+---
+
+## 1. Avoid SELECT *
+
+Do not select every column if you only need a few.
+
+Bad:
+
+```sql
+SELECT *
+FROM `bigquery-public-data.github_repos.contents`;
+```
+
+Better:
+
+```sql
+SELECT
+    size,
+    binary
+FROM `bigquery-public-data.github_repos.contents`;
+```
+
+Reason:
+
+```text
+SELECT * scans all columns
+specific SELECT scans only needed columns
+```
+
+This is especially important when the table contains large text fields.
+
+---
+
+## 2. Read only necessary data
+
+Use only the columns needed for the analysis.
+
+If two columns represent the same information, prefer the smaller / simpler column.
+
+Example idea:
+
+```text
+station_id is smaller than station_name
+```
+
+Efficient query style:
+
+```sql
+SELECT
+    start_station_name,
+    end_station_name,
+    AVG(duration_sec) AS avg_duration_sec
+FROM `bigquery-public-data.san_francisco.bikeshare_trips`
+WHERE start_station_name != end_station_name
+GROUP BY start_station_name, end_station_name
+LIMIT 10;
+```
+
+Main point:
+
+```text
+less columns scanned = cheaper and faster query
+```
+
+---
+
+## 3. Avoid large N:N JOINs
+
+JOIN types by relationship:
+
+```text
+1:1  → each row matches at most one row
+N:1  → many rows match one row
+N:N  → many rows match many rows
+```
+
+N:N JOINs can create very large intermediate tables.
+
+This can make queries much slower.
+
+---
+
+## Bad pattern: join too early
+
+This query joins large raw tables first:
+
+```sql
+SELECT
+    repo,
+    COUNT(DISTINCT c.committer.name) AS num_committers,
+    COUNT(DISTINCT f.id) AS num_files
+FROM `bigquery-public-data.github_repos.commits` AS c,
+    UNNEST(c.repo_name) AS repo
+INNER JOIN `bigquery-public-data.github_repos.files` AS f
+    ON f.repo_name = repo
+WHERE f.repo_name IN (
+    'tensorflow/tensorflow',
+    'facebook/react',
+    'twbs/bootstrap',
+    'apple/swift',
+    'Microsoft/vscode',
+    'torvalds/linux'
+)
+GROUP BY repo
+ORDER BY repo;
+```
+
+Problem:
+
+```text
+large raw commits table
+large raw files table
+joined before reducing size
+```
+
+---
+
+## Better pattern: aggregate first, then join
+
+Use CTEs to reduce each table first.
+
+```sql
+WITH commits AS (
+    SELECT
+        COUNT(DISTINCT committer.name) AS num_committers,
+        repo
+    FROM `bigquery-public-data.github_repos.commits`,
+        UNNEST(repo_name) AS repo
+    WHERE repo IN (
+        'tensorflow/tensorflow',
+        'facebook/react',
+        'twbs/bootstrap',
+        'apple/swift',
+        'Microsoft/vscode',
+        'torvalds/linux'
+    )
+    GROUP BY repo
+),
+files AS (
+    SELECT
+        COUNT(DISTINCT id) AS num_files,
+        repo_name AS repo
+    FROM `bigquery-public-data.github_repos.files`
+    WHERE repo_name IN (
+        'tensorflow/tensorflow',
+        'facebook/react',
+        'twbs/bootstrap',
+        'apple/swift',
+        'Microsoft/vscode',
+        'torvalds/linux'
+    )
+    GROUP BY repo
+)
+SELECT
+    commits.repo,
+    commits.num_committers,
+    files.num_files
+FROM commits
+INNER JOIN files
+    ON commits.repo = files.repo
+ORDER BY repo;
+```
+
+Why better:
+
+```text
+CTE commits → one row per repo
+CTE files   → one row per repo
+final JOIN  → small join
+```
+
+Main idea:
+
+```text
+reduce data first
+then join
+```
+
+---
+
+## Efficient query checklist
+
+Before running a large BigQuery query, check:
+
+```text
+Am I using SELECT * unnecessarily?
+Can I select fewer columns?
+Can I filter earlier with WHERE?
+Can I aggregate before joining?
+Am I creating an N:N JOIN?
+Can a CTE make the query smaller and clearer?
+```
+
+---
+
+## Key takeaways
+
+```text
+Nested data:
+access with dot notation
+
+Repeated data:
+flatten with UNNEST()
+
+Nested + repeated data:
+UNNEST first, then use dot notation
+
+Efficient queries:
+select fewer columns, scan less data, avoid large N:N joins
+
+Best optimization pattern:
+filter/aggregate first, join later
+```
