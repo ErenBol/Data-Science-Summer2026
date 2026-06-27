@@ -181,6 +181,26 @@ SELECT 3 AS query_to_optimize;
 -- Task 2: Rewrite the costume location query to filter early and avoid unnecessary large joins.
 -- Goal: get the most recent location of each costume owned by a given owner.
 
+WITH LocationsAndOwners AS 
+(
+SELECT * 
+FROM CostumeOwners co INNER JOIN CostumeLocations cl
+   ON co.CostumeID = cl.CostumeID
+),
+LastSeen AS
+(
+SELECT CostumeID, MAX(Timestamp)
+FROM LocationsAndOwners
+GROUP BY CostumeID
+)
+SELECT lo.CostumeID, Location 
+FROM LocationsAndOwners lo INNER JOIN LastSeen ls 
+    ON lo.Timestamp = ls.Timestamp AND lo.CostumeID = ls.CostumeID
+WHERE OwnerID = MitzieOwnerID
+
+
+
+-- My answer: 
 WITH CurrentOwnersCostumes AS (
 SELECT CostumeID
 FROM CostumeOwners
