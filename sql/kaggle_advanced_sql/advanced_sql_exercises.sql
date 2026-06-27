@@ -125,3 +125,87 @@ MINUTE
 ) AS prev_break
 FROM `bigquery-public-data.chicago_taxi_trips.taxi_trips`
 WHERE DATE(trip_start_timestamp) = '2013-10-03';
+
+-- =========================================================
+-- Section 3: Nested and Repeated Data
+-- Dataset: GitHub Repos
+-- =========================================================
+
+-- Task 1: Find committers with the most commits in 2016.
+-- Output columns: committer_name, num_commits
+
+SELECT
+committer.name AS committer_name,
+COUNT(1) AS num_commits
+FROM `bigquery-public-data.github_repos.sample_commits`
+WHERE EXTRACT(YEAR FROM committer.date) = 2016
+GROUP BY committer.name
+ORDER BY num_commits DESC;
+
+-- Task 2: Determine how many rows are returned after unnesting the sample language table.
+-- My answer: 6
+
+SELECT 6 AS num_rows;
+
+-- Task 3: Find programming languages that appear in the most repositories.
+-- Output columns: language_name, num_repos
+
+SELECT
+l.name AS language_name,
+COUNT(1) AS num_repos
+FROM `bigquery-public-data.github_repos.languages`,
+UNNEST(language) AS l
+GROUP BY language_name
+ORDER BY num_repos DESC;
+
+-- Task 4: List all languages used in the repository 'polyrabbit/polyglot'.
+-- Output columns: name, bytes
+
+SELECT
+l.name AS name,
+l.bytes AS bytes
+FROM `bigquery-public-data.github_repos.languages`,
+UNNEST(language) AS l
+WHERE repo_name = 'polyrabbit/polyglot'
+ORDER BY bytes DESC;
+
+-- =========================================================
+-- Section 4: Writing Efficient Queries
+-- =========================================================
+
+-- Task 1: Choose which query is most worth optimizing.
+-- My answer: 3
+
+SELECT 3 AS query_to_optimize;
+
+-- Task 2: Rewrite the costume location query to filter early and avoid unnecessary large joins.
+-- Goal: get the most recent location of each costume owned by a given owner.
+
+WITH CurrentOwnersCostumes AS (
+SELECT CostumeID
+FROM CostumeOwners
+WHERE OwnerID = @MitzieOwnerID
+),
+OwnersCostumesLocations AS (
+SELECT
+cc.CostumeID,
+cl.Timestamp,
+cl.Location
+FROM CurrentOwnersCostumes AS cc
+INNER JOIN CostumeLocations AS cl
+ON cc.CostumeID = cl.CostumeID
+),
+LastSeen AS (
+SELECT
+CostumeID,
+MAX(Timestamp) AS Timestamp
+FROM OwnersCostumesLocations
+GROUP BY CostumeID
+)
+SELECT
+ocl.CostumeID,
+ocl.Location
+FROM OwnersCostumesLocations AS ocl
+INNER JOIN LastSeen AS ls
+ON ocl.CostumeID = ls.CostumeID
+AND ocl.Timestamp = ls.Timestamp;
