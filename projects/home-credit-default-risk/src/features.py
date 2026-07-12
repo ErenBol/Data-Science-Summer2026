@@ -67,7 +67,7 @@ def create_features(data: pd.DataFrame) -> pd.DataFrame:
 
     data["EXT_SOURCE_MAX"] = data[external_columns].max(axis=1)
 
-    data["EXT_SOURCE_STD"] = data[external_columns].std(axis=1)
+    data["EXT_SOURCE_STD"] = data[external_columns].std(axis=1, ddof=0)
 
     data["EXT_SOURCE_COUNT"] = data[external_columns].notna().sum(axis=1)
 
