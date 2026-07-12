@@ -5,14 +5,14 @@ from collections.abc import Sequence
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder
 
 
 def build_preprocessor(
     numeric_columns: Sequence[str],
     categorical_columns: Sequence[str],
 ) -> ColumnTransformer:
-    """Build preprocessing pipelines for numeric and categorical features."""
+    """Build preprocessing for tree-based classification models."""
 
     numeric_pipeline = Pipeline(
         steps=[
@@ -22,10 +22,6 @@ def build_preprocessor(
                     strategy="median",
                     add_indicator=True,
                 ),
-            ),
-            (
-                "scaler",
-                StandardScaler(),
             ),
         ]
     )
@@ -47,7 +43,7 @@ def build_preprocessor(
         ]
     )
 
-    preprocessor = ColumnTransformer(
+    return ColumnTransformer(
         transformers=[
             (
                 "numeric",
@@ -62,5 +58,3 @@ def build_preprocessor(
         ],
         remainder="drop",
     )
-
-    return preprocessor
