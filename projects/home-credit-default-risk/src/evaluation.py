@@ -4,6 +4,9 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+
+from sklearn.model_selection import cross_val_score
+
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -96,3 +99,37 @@ def evaluate_classifier(
     }
 
     return metrics
+
+
+# Cross validation model comparison function
+def compare_model_cv(
+    name: str,
+    model_pipeline: Any,
+    X,
+    y,
+    cv,
+    scoring: str = "roc_auc",
+) -> dict[str, float | str]:
+    """
+    Evaluate one model Pipeline using cross-validation.
+
+    Returns the model name, mean score, standard deviation,
+    minimum score and maximum score.
+    """
+
+    scores = cross_val_score(
+        estimator=model_pipeline,
+        X=X,
+        y=y,
+        cv=cv,
+        scoring=scoring,
+        n_jobs=-1,
+    )
+
+    return {
+        "model": name,
+        "mean_cv_roc_auc": scores.mean(),
+        "std_cv_roc_auc": scores.std(),
+        "min_cv_roc_auc": scores.min(),
+        "max_cv_roc_auc": scores.max(),
+    }
