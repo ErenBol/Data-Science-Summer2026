@@ -9,25 +9,31 @@ The current best feature set is:
 
 `Curated raw + engineered`
 
-Notebook `06_model_threshold_selection.ipynb` selects the best current model:
+Notebook `07_external_boosting_tuning.ipynb` selects the best current ranking
+model:
 
-`Hist Gradient Boosting`
+`LightGBM tuned 3`
 
 The selected classification threshold is:
 
-`0.658010`
+`0.679819`
 
 Holdout test metrics:
 
-- ROC-AUC: `0.762573`
-- Average precision: `0.252267`
-- Class 1 precision: `0.243290`
-- Class 1 recall: `0.452769`
-- Class 1 F1: `0.316508`
-- Accuracy: `0.842138`
+- ROC-AUC: `0.764133`
+- Average precision: `0.253209`
+- Class 1 precision: `0.257798`
+- Class 1 recall: `0.407855`
+- Class 1 F1: `0.315913`
+- Accuracy: `0.857405`
 
 The full raw application table underperformed the curated feature set, even
 after adding engineered features. More columns were not better in this run.
+
+The previous Hist Gradient Boosting model from notebook `06` has a fractionally
+higher holdout F1 (`0.316508`), but tuned LightGBM has better ROC-AUC and
+average precision. Use LightGBM for risk ranking and keep the threshold decision
+explicit.
 
 ## Project Notes
 
@@ -40,11 +46,17 @@ after adding engineered features. More columns were not better in this run.
   feature experimentation report.
 - `reports/model_threshold_selection_report.md` contains the latest model and
   threshold selection report.
+- `reports/external_boosting_tuning_report.md` contains the external boosting
+  comparison and LightGBM tuning report.
+- `requirements.txt` lists the project dependencies, including LightGBM,
+  XGBoost, and CatBoost.
 
 ## Recommended Next Steps
 
 - Keep `Curated raw + engineered` as the working feature set.
-- Use Hist Gradient Boosting as the current best local model.
-- Install and test LightGBM, XGBoost, or CatBoost for the next model jump.
+- Use tuned LightGBM as the current best ranking model.
+- Use threshold `0.679819` for the current balanced classifier, or threshold
+  `0.5` when higher recall is more important than false positives.
+- Run broader LightGBM tuning before changing the feature set.
 - Add relational Home Credit tables only after model/threshold selection is
   stable under the same validation/test protocol.
