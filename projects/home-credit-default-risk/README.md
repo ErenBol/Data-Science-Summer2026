@@ -50,6 +50,10 @@ explicit.
   comparison and LightGBM tuning report.
 - `reports/application_train_profile.html` contains the generated profiling
   report for `application_train.csv`.
+- `reports/application_train_profile.json` contains the profiling report in
+  JSON format for programmatic inspection.
+- `reports/profile_guided_feature_pruning_report.md` contains the
+  profile-guided feature-importance and pruning experiment.
 - `requirements.txt` lists the project dependencies, including LightGBM,
   XGBoost, and CatBoost.
 - `requirements-profiling.txt` lists the separate profiling dependency. The
@@ -62,6 +66,9 @@ explicit.
 - Use tuned LightGBM as the current best ranking model.
 - Use threshold `0.679819` for the current balanced classifier, or threshold
   `0.5` when higher recall is more important than false positives.
+- For a smaller ranking-focused model, use the 24-feature pruned LightGBM list
+  from `08_profile_guided_feature_pruning.ipynb`. It slightly improves ROC-AUC
+  but is slightly worse on F1.
 - Run broader LightGBM tuning before changing the feature set.
 - Add relational Home Credit tables only after model/threshold selection is
   stable under the same validation/test protocol.

@@ -31,6 +31,10 @@ def main() -> None:
         REPORTS_DIR / "application_train_profile.html",
     )
 
+    profile.to_file(
+        REPORTS_DIR / "application_train_profile.json",
+    )
+
 
 if __name__ == "__main__":
     main()
