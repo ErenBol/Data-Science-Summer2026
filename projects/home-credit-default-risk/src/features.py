@@ -31,6 +31,9 @@ ENGINEERED_FEATURE_GROUPS = {
         "REGISTRATION_YEARS",
         "ID_PUBLISH_YEARS",
         "PHONE_CHANGE_YEARS",
+        "REGISTRATION_AGE_RATIO",
+        "ID_PUBLISH_AGE_RATIO",
+        "PHONE_CHANGE_AGE_RATIO",
     ],
     "financial": [
         "CREDIT_INCOME_RATIO",
@@ -64,6 +67,12 @@ ENGINEERED_FEATURE_GROUPS = {
     "bureau_requests": [
         "BUREAU_REQUEST_TOTAL",
         "BUREAU_REQUEST_RECENT",
+        "BUREAU_REQUEST_RECENT_TO_YEAR_RATIO",
+    ],
+    "region_timing": [
+        "REGION_RATING_DIFF",
+        "IS_WEEKEND_APPLICATION",
+        "IS_NIGHT_APPLICATION",
     ],
     "building": [
         "BUILDING_FEATURE_MEAN",
@@ -110,6 +119,21 @@ def create_features(data: pd.DataFrame) -> pd.DataFrame:
 
     if "DAYS_LAST_PHONE_CHANGE" in data.columns:
         data["PHONE_CHANGE_YEARS"] = -data["DAYS_LAST_PHONE_CHANGE"] / 365.25
+
+    if _has_columns(data, ["REGISTRATION_YEARS", "AGE_YEARS"]):
+        data["REGISTRATION_AGE_RATIO"] = _safe_divide(
+            data["REGISTRATION_YEARS"], data["AGE_YEARS"]
+        )
+
+    if _has_columns(data, ["ID_PUBLISH_YEARS", "AGE_YEARS"]):
+        data["ID_PUBLISH_AGE_RATIO"] = _safe_divide(
+            data["ID_PUBLISH_YEARS"], data["AGE_YEARS"]
+        )
+
+    if _has_columns(data, ["PHONE_CHANGE_YEARS", "AGE_YEARS"]):
+        data["PHONE_CHANGE_AGE_RATIO"] = _safe_divide(
+            data["PHONE_CHANGE_YEARS"], data["AGE_YEARS"]
+        )
 
     if _has_columns(data, ["AMT_CREDIT", "AMT_INCOME_TOTAL"]):
         data["CREDIT_INCOME_RATIO"] = _safe_divide(
@@ -188,6 +212,21 @@ def create_features(data: pd.DataFrame) -> pd.DataFrame:
     if _has_columns(data, address_columns):
         data["ADDRESS_MISMATCH_COUNT"] = data[address_columns].sum(axis=1)
 
+    if _has_columns(data, ["REGION_RATING_CLIENT", "REGION_RATING_CLIENT_W_CITY"]):
+        data["REGION_RATING_DIFF"] = (
+            data["REGION_RATING_CLIENT"] - data["REGION_RATING_CLIENT_W_CITY"]
+        )
+
+    if "WEEKDAY_APPR_PROCESS_START" in data.columns:
+        data["IS_WEEKEND_APPLICATION"] = data["WEEKDAY_APPR_PROCESS_START"].isin(
+            ["SATURDAY", "SUNDAY"]
+        ).astype(int)
+
+    if "HOUR_APPR_PROCESS_START" in data.columns:
+        data["IS_NIGHT_APPLICATION"] = data["HOUR_APPR_PROCESS_START"].isin(
+            [0, 1, 2, 3, 4, 5, 22, 23]
+        ).astype(int)
+
     document_columns = [
         column for column in data.columns if column.startswith("FLAG_DOCUMENT_")
     ]
@@ -233,6 +272,10 @@ def create_features(data: pd.DataFrame) -> pd.DataFrame:
                 "AMT_REQ_CREDIT_BUREAU_MON",
             ]
         ].sum(axis=1, min_count=1)
+
+        data["BUREAU_REQUEST_RECENT_TO_YEAR_RATIO"] = _safe_divide(
+            data["BUREAU_REQUEST_RECENT"], data["AMT_REQ_CREDIT_BUREAU_YEAR"]
+        )
 
     building_numeric_columns = [
         column

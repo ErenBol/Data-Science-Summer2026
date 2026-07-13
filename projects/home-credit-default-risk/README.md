@@ -9,31 +9,29 @@ The current best feature set is:
 
 `Curated raw + engineered`
 
-Notebook `07_external_boosting_tuning.ipynb` selects the best current ranking
-model:
+Notebook `09_expanded_application_feature_groups.ipynb` selects the best
+current application-table model:
 
-`LightGBM tuned 3`
+`Expanded LightGBM`
 
 The selected classification threshold is:
 
-`0.679819`
+`0.688844`
 
 Holdout test metrics:
 
-- ROC-AUC: `0.764133`
-- Average precision: `0.253209`
-- Class 1 precision: `0.257798`
-- Class 1 recall: `0.407855`
-- Class 1 F1: `0.315913`
-- Accuracy: `0.857405`
+- ROC-AUC: `0.769069`
+- Average precision: `0.258392`
+- Class 1 precision: `0.268735`
+- Class 1 recall: `0.390735`
+- Class 1 F1: `0.318450`
+- Accuracy: `0.864982`
 
 The full raw application table underperformed the curated feature set, even
 after adding engineered features. More columns were not better in this run.
 
-The previous Hist Gradient Boosting model from notebook `06` has a fractionally
-higher holdout F1 (`0.316508`), but tuned LightGBM has better ROC-AUC and
-average precision. Use LightGBM for risk ranking and keep the threshold decision
-explicit.
+The expanded LightGBM model improves ROC-AUC, average precision, and class-1 F1
+over the previous tuned LightGBM setup from notebook `07`.
 
 ## Project Notes
 
@@ -54,6 +52,8 @@ explicit.
   JSON format for programmatic inspection.
 - `reports/profile_guided_feature_pruning_report.md` contains the
   profile-guided feature-importance and pruning experiment.
+- `reports/expanded_application_feature_groups_report.md` contains the
+  expanded application feature group experiment.
 - `requirements.txt` lists the project dependencies, including LightGBM,
   XGBoost, and CatBoost.
 - `requirements-profiling.txt` lists the separate profiling dependency. The
@@ -62,14 +62,14 @@ explicit.
 
 ## Recommended Next Steps
 
-- Keep `Curated raw + engineered` as the working feature set.
-- Use tuned LightGBM as the current best ranking model.
-- Use threshold `0.679819` for the current balanced classifier, or threshold
+- Use expanded application features as the current best feature set.
+- Use expanded LightGBM as the current best application-table model.
+- Use threshold `0.688844` for the current balanced classifier, or threshold
   `0.5` when higher recall is more important than false positives.
 - For a smaller ranking-focused model, use the 24-feature pruned LightGBM list
   from `08_profile_guided_feature_pruning.ipynb`. It slightly improves ROC-AUC
   but is slightly worse on F1.
-- Run broader LightGBM tuning before changing the feature set.
+- Run broader LightGBM tuning on the expanded feature set.
 - Add relational Home Credit tables only after model/threshold selection is
   stable under the same validation/test protocol.
 
