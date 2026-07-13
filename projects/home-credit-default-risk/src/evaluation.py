@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import Pipeline
 
 from sklearn.metrics import (
     accuracy_score,
@@ -16,6 +17,8 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
 )
+
+from src.preprocessing import build_preprocessor
 
 
 def evaluate_classifier(
@@ -132,4 +135,54 @@ def compare_model_cv(
         "std_cv_roc_auc": scores.std(),
         "min_cv_roc_auc": scores.min(),
         "max_cv_roc_auc": scores.max(),
+    }
+
+
+def compare_feature_set_cv(
+    name: str,
+    X: pd.DataFrame,
+    y: pd.Series | np.ndarray,
+    model: Any,
+    cv,
+    scoring: str = "roc_auc",
+) -> dict[str, float | str]:
+    """Evaluate one feature matrix with a fresh preprocessing/model pipeline."""
+
+    numeric_columns = X.select_dtypes(include="number").columns.tolist()
+    categorical_columns = X.select_dtypes(exclude="number").columns.tolist()
+
+    preprocessor = build_preprocessor(
+        numeric_columns=numeric_columns,
+        categorical_columns=categorical_columns,
+    )
+
+    pipeline = Pipeline(
+        steps=[
+            ("preprocessor", preprocessor),
+            ("model", model),
+        ]
+    )
+
+    scores = cross_val_score(
+        estimator=pipeline,
+        X=X,
+        y=y,
+        cv=cv,
+        scoring=scoring,
+        n_jobs=-1,
+    )
+
+    preprocessor.fit(X, y)
+    transformed_feature_count = len(
+        preprocessor.get_feature_names_out()
+    )
+
+    return {
+        "feature_set": name,
+        "raw_feature_count": X.shape[1],
+        "transformed_feature_count": transformed_feature_count,
+        "mean_cv_auc": scores.mean(),
+        "std_cv_auc": scores.std(),
+        "minimum_auc": scores.min(),
+        "maximum_auc": scores.max(),
     }
