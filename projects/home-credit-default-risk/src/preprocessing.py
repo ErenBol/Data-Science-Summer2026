@@ -12,6 +12,7 @@ def build_preprocessor(
     numeric_columns: Sequence[str],
     categorical_columns: Sequence[str],
     scale_numeric: bool = False,
+    one_hot_sparse_output: bool = True,
 ) -> ColumnTransformer:
     """Build preprocessing for classification models."""
 
@@ -49,6 +50,7 @@ def build_preprocessor(
                 "encoder",
                 OneHotEncoder(
                     handle_unknown="ignore",
+                    sparse_output=one_hot_sparse_output,
                 ),
             ),
         ]
