@@ -48,8 +48,13 @@ explicit.
   threshold selection report.
 - `reports/external_boosting_tuning_report.md` contains the external boosting
   comparison and LightGBM tuning report.
+- `reports/application_train_profile.html` contains the generated profiling
+  report for `application_train.csv`.
 - `requirements.txt` lists the project dependencies, including LightGBM,
   XGBoost, and CatBoost.
+- `requirements-profiling.txt` lists the separate profiling dependency. The
+  profiling report is generated in `.profiling-venv` because
+  `ydata-profiling` currently requires `pandas<3`.
 
 ## Recommended Next Steps
 
@@ -60,3 +65,13 @@ explicit.
 - Run broader LightGBM tuning before changing the feature set.
 - Add relational Home Credit tables only after model/threshold selection is
   stable under the same validation/test protocol.
+
+## Profiling Report
+
+Generate the profiling environment and report with:
+
+```powershell
+python -m venv .profiling-venv
+.profiling-venv\Scripts\python.exe -m pip install -r requirements-profiling.txt
+.profiling-venv\Scripts\python.exe scripts\generate_pandas_profile.py
+```
