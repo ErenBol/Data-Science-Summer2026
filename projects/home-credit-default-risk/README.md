@@ -7,29 +7,36 @@ application dataset.
 
 The current best feature set is:
 
-`Expanded application features + all relational table aggregates`
+`Compact domain-pruned relational aggregates`
 
-Notebook `10_relational_feature_experiments.ipynb` and
-`scripts/run_relational_feature_experiments.py` select the best current model:
+Notebook `11_relational_feature_pruning.ipynb` and
+`scripts/run_relational_feature_pruning.py` select the best practical model:
 
-`Relational LightGBM`
+`Compact relational LightGBM`
 
 The selected classification threshold is:
 
-`0.687520`
+`0.682093`
+
+Feature count:
+
+- Raw joined features: `350`
+- Transformed model features: `399`
 
 Holdout test metrics:
 
-- ROC-AUC: `0.790203`
-- Average precision: `0.288818`
-- Class 1 precision: `0.289514`
-- Class 1 recall: `0.423162`
-- Class 1 F1: `0.343806`
-- Accuracy: `0.869600`
+- ROC-AUC: `0.790435`
+- Average precision: `0.289425`
+- Class 1 precision: `0.287289`
+- Class 1 recall: `0.435650`
+- Class 1 F1: `0.346246`
+- Accuracy: `0.867193`
 
 The previous best application-table-only model from notebook `09` had ROC-AUC
 `0.769069` and class-1 F1 `0.318450`. Adding full relational aggregate groups
-improved ranking quality and the selected-threshold classifier.
+improved ranking quality and the selected-threshold classifier. Pruning the
+joined relational matrix then reduced the transformed feature count from `1884`
+to `399` while slightly improving holdout ROC-AUC and F1.
 
 ## Project Notes
 
@@ -56,6 +63,8 @@ improved ranking quality and the selected-threshold classifier.
   JSON files from all supplied tables.
 - `reports/relational_feature_experiments_report.md` contains the relational
   feature group experiments, final metrics, and feature-importance findings.
+- `reports/relational_feature_pruning_report.md` contains the relational
+  pruning, grouped one-hot, and missing-indicator experiments.
 - `requirements.txt` lists the project dependencies, including LightGBM,
   XGBoost, and CatBoost.
 - `requirements-profiling.txt` lists the separate profiling dependency. The
@@ -64,11 +73,11 @@ improved ranking quality and the selected-threshold classifier.
 
 ## Recommended Next Steps
 
-- Use the relational LightGBM model as the current best model.
-- Use threshold `0.687520` for the current balanced classifier, or threshold
+- Use the compact relational LightGBM model as the current best practical model.
+- Use threshold `0.682093` for the current balanced classifier, or threshold
   `0.5` when higher recall is more important than false positives.
-- Tune LightGBM on the full relational matrix; the current hyperparameters were
-  inherited from the application-table model.
+- Tune LightGBM on the compact relational matrix; the current hyperparameters
+  were inherited from the application-table model.
 - Add recent-history window aggregates, especially for bureau recency,
   installment lateness, previous refusals, and credit-card utilization.
 - Compare tuned LightGBM against CatBoost on the same joined feature matrix.

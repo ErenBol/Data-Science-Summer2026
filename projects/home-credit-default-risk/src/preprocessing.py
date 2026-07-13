@@ -12,7 +12,10 @@ def build_preprocessor(
     numeric_columns: Sequence[str],
     categorical_columns: Sequence[str],
     scale_numeric: bool = False,
+    numeric_add_indicator: bool = True,
     one_hot_sparse_output: bool = True,
+    one_hot_min_frequency: int | float | None = None,
+    one_hot_max_categories: int | None = None,
 ) -> ColumnTransformer:
     """Build preprocessing for classification models."""
 
@@ -21,7 +24,7 @@ def build_preprocessor(
             "imputer",
             SimpleImputer(
                 strategy="median",
-                add_indicator=True,
+                add_indicator=numeric_add_indicator,
             ),
         ),
     ]
@@ -38,6 +41,19 @@ def build_preprocessor(
         steps=numeric_steps,
     )
 
+    one_hot_kwargs = {
+        "handle_unknown": "ignore",
+        "sparse_output": one_hot_sparse_output,
+    }
+
+    if one_hot_min_frequency is not None:
+        one_hot_kwargs["min_frequency"] = one_hot_min_frequency
+        one_hot_kwargs["handle_unknown"] = "infrequent_if_exist"
+
+    if one_hot_max_categories is not None:
+        one_hot_kwargs["max_categories"] = one_hot_max_categories
+        one_hot_kwargs["handle_unknown"] = "infrequent_if_exist"
+
     categorical_pipeline = Pipeline(
         steps=[
             (
@@ -48,10 +64,7 @@ def build_preprocessor(
             ),
             (
                 "encoder",
-                OneHotEncoder(
-                    handle_unknown="ignore",
-                    sparse_output=one_hot_sparse_output,
-                ),
+                OneHotEncoder(**one_hot_kwargs),
             ),
         ]
     )
