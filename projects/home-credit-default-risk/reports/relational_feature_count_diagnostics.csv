@@ -1,0 +1,7 @@
+feature_group,raw_source_columns,positive_gain_columns,zero_gain_columns,total_gain
+application engineered,128,121,7,1493736.3521213531
+bureau + bureau_balance,174,110,64,247875.2473526001
+previous_application,407,246,161,315881.97265625
+installments_payments,45,39,6,191982.27084732056
+POS_CASH_balance,45,31,14,64542.92988395691
+credit_card_balance,109,81,28,89142.74759292603

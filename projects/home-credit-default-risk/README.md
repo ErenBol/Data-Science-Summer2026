@@ -7,36 +7,42 @@ application dataset.
 
 The current best feature set is:
 
-`Compact domain-pruned relational aggregates`
+`Top-200 gain-pruned relational aggregates`
 
-Notebook `11_relational_feature_pruning.ipynb` and
-`scripts/run_relational_feature_pruning.py` select the best practical model:
+`scripts/run_relational_feature_reduction.py` selects the smallest practical
+model that keeps nearly the same ranking quality:
 
-`Compact relational LightGBM`
+`Reduced relational LightGBM`
 
 The selected classification threshold is:
 
-`0.682093`
+`0.673881`
 
 Feature count:
 
-- Raw joined features: `350`
-- Transformed model features: `399`
+- Raw joined features: `200`
+- Transformed model features: `244`
 
 Holdout test metrics:
 
-- ROC-AUC: `0.790435`
-- Average precision: `0.289425`
-- Class 1 precision: `0.287289`
-- Class 1 recall: `0.435650`
-- Class 1 F1: `0.346246`
-- Accuracy: `0.867193`
+- ROC-AUC: `0.790318`
+- Average precision: `0.287613`
+- Class 1 precision: `0.278762`
+- Class 1 recall: `0.449950`
+- Class 1 F1: `0.344248`
+- Accuracy: `0.861617`
 
 The previous best application-table-only model from notebook `09` had ROC-AUC
 `0.769069` and class-1 F1 `0.318450`. Adding full relational aggregate groups
-improved ranking quality and the selected-threshold classifier. Pruning the
-joined relational matrix then reduced the transformed feature count from `1884`
-to `399` while slightly improving holdout ROC-AUC and F1.
+improved ranking quality and the selected-threshold classifier. The full
+relational model had `908` raw columns and `1884` transformed features. The
+reduced model keeps nearly the same ROC-AUC with `200` raw columns and `244`
+transformed features.
+
+The best pure holdout ROC-AUC found so far is the compact 350-column model:
+ROC-AUC `0.790435`, class-1 F1 `0.346246`, and `399` transformed features.
+The top-200 model is preferred as the cleaner baseline because it is much
+smaller with only a tiny ROC-AUC difference.
 
 ## Project Notes
 
@@ -65,6 +71,8 @@ to `399` while slightly improving holdout ROC-AUC and F1.
   feature group experiments, final metrics, and feature-importance findings.
 - `reports/relational_feature_pruning_report.md` contains the relational
   pruning, grouped one-hot, and missing-indicator experiments.
+- `reports/relational_feature_reduction_report.md` contains the stricter
+  150/200/250-feature reduction experiments and model-save result.
 - `requirements.txt` lists the project dependencies, including LightGBM,
   XGBoost, and CatBoost.
 - `requirements-profiling.txt` lists the separate profiling dependency. The
@@ -73,10 +81,11 @@ to `399` while slightly improving holdout ROC-AUC and F1.
 
 ## Recommended Next Steps
 
-- Use the compact relational LightGBM model as the current best practical model.
-- Use threshold `0.682093` for the current balanced classifier, or threshold
+- Use the top-200 reduced relational LightGBM model as the current clean
+  baseline.
+- Use threshold `0.673881` for the current balanced classifier, or threshold
   `0.5` when higher recall is more important than false positives.
-- Tune LightGBM on the compact relational matrix; the current hyperparameters
+- Tune LightGBM on the reduced relational matrix; the current hyperparameters
   were inherited from the application-table model.
 - Add recent-history window aggregates, especially for bureau recency,
   installment lateness, previous refusals, and credit-card utilization.
