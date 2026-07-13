@@ -7,31 +7,29 @@ application dataset.
 
 The current best feature set is:
 
-`Curated raw + engineered`
+`Expanded application features + all relational table aggregates`
 
-Notebook `09_expanded_application_feature_groups.ipynb` selects the best
-current application-table model:
+Notebook `10_relational_feature_experiments.ipynb` and
+`scripts/run_relational_feature_experiments.py` select the best current model:
 
-`Expanded LightGBM`
+`Relational LightGBM`
 
 The selected classification threshold is:
 
-`0.688844`
+`0.687520`
 
 Holdout test metrics:
 
-- ROC-AUC: `0.769069`
-- Average precision: `0.258392`
-- Class 1 precision: `0.268735`
-- Class 1 recall: `0.390735`
-- Class 1 F1: `0.318450`
-- Accuracy: `0.864982`
+- ROC-AUC: `0.790203`
+- Average precision: `0.288818`
+- Class 1 precision: `0.289514`
+- Class 1 recall: `0.423162`
+- Class 1 F1: `0.343806`
+- Accuracy: `0.869600`
 
-The full raw application table underperformed the curated feature set, even
-after adding engineered features. More columns were not better in this run.
-
-The expanded LightGBM model improves ROC-AUC, average precision, and class-1 F1
-over the previous tuned LightGBM setup from notebook `07`.
+The previous best application-table-only model from notebook `09` had ROC-AUC
+`0.769069` and class-1 F1 `0.318450`. Adding full relational aggregate groups
+improved ranking quality and the selected-threshold classifier.
 
 ## Project Notes
 
@@ -54,6 +52,10 @@ over the previous tuned LightGBM setup from notebook `07`.
   profile-guided feature-importance and pruning experiment.
 - `reports/expanded_application_feature_groups_report.md` contains the
   expanded application feature group experiment.
+- `reports/relational_profile_json_summary.md` summarizes the generated profile
+  JSON files from all supplied tables.
+- `reports/relational_feature_experiments_report.md` contains the relational
+  feature group experiments, final metrics, and feature-importance findings.
 - `requirements.txt` lists the project dependencies, including LightGBM,
   XGBoost, and CatBoost.
 - `requirements-profiling.txt` lists the separate profiling dependency. The
@@ -62,16 +64,14 @@ over the previous tuned LightGBM setup from notebook `07`.
 
 ## Recommended Next Steps
 
-- Use expanded application features as the current best feature set.
-- Use expanded LightGBM as the current best application-table model.
-- Use threshold `0.688844` for the current balanced classifier, or threshold
+- Use the relational LightGBM model as the current best model.
+- Use threshold `0.687520` for the current balanced classifier, or threshold
   `0.5` when higher recall is more important than false positives.
-- For a smaller ranking-focused model, use the 24-feature pruned LightGBM list
-  from `08_profile_guided_feature_pruning.ipynb`. It slightly improves ROC-AUC
-  but is slightly worse on F1.
-- Run broader LightGBM tuning on the expanded feature set.
-- Add relational Home Credit tables only after model/threshold selection is
-  stable under the same validation/test protocol.
+- Tune LightGBM on the full relational matrix; the current hyperparameters were
+  inherited from the application-table model.
+- Add recent-history window aggregates, especially for bureau recency,
+  installment lateness, previous refusals, and credit-card utilization.
+- Compare tuned LightGBM against CatBoost on the same joined feature matrix.
 
 ## Profiling Report
 
@@ -81,4 +81,5 @@ Generate the profiling environment and report with:
 python -m venv .profiling-venv
 .profiling-venv\Scripts\python.exe -m pip install -r requirements-profiling.txt
 .profiling-venv\Scripts\python.exe scripts\generate_pandas_profile.py
+.profiling-venv\Scripts\python.exe scripts\generate_relational_profiles.py --sample-rows 200000
 ```
