@@ -7,31 +7,30 @@ application dataset.
 
 The current best feature set is:
 
-`Top-200 gain-pruned relational aggregates`
+`Top-200 reduced relational aggregates + advanced recent/domain features + fold-safe target encodings`
 
-`scripts/run_reduced_model_selection.py` compares CatBoost against the reduced
-feature baseline and tunes LightGBM with Optuna when CatBoost does not improve
-validation ROC-AUC enough:
+`scripts/train_final_advanced_pruned_holdout.py` trains the current final model
+on the same train/holdout split used by the reduced-model experiments:
 
-`Optuna-tuned reduced relational LightGBM`
+`Final advanced pruned LightGBM`
 
 The selected classification threshold is:
 
-`0.656411`
+`0.670438`
 
 Feature count:
 
-- Raw joined features: `200`
-- Transformed model features: `244`
+- Raw joined features: `321`
+- Selected transformed model features: `364`
 
 Holdout test metrics:
 
-- ROC-AUC: `0.791323`
-- Average precision: `0.290276`
-- Class 1 precision: `0.275915`
-- Class 1 recall: `0.467472`
-- Class 1 F1: `0.347014`
-- Accuracy: `0.857974`
+- ROC-AUC: `0.794353`
+- Average precision: `0.296705`
+- Class 1 precision: `0.289391`
+- Class 1 recall: `0.443907`
+- Class 1 F1: `0.350370`
+- Accuracy: `0.867112`
 
 The previous best application-table-only model from notebook `09` had ROC-AUC
 `0.769069` and class-1 F1 `0.318450`. Adding full relational aggregate groups
@@ -40,9 +39,10 @@ relational model had `908` raw columns and `1884` transformed features. The
 reduced model keeps nearly the same ROC-AUC with `200` raw columns and `244`
 transformed features.
 
-CatBoost on the same reduced 200-feature set reached validation ROC-AUC
-`0.787485`, which was below the previous reduced LightGBM validation ROC-AUC
-`0.787824`, so LightGBM was tuned with Optuna instead of tuning CatBoost.
+The previous saved reduced Optuna model had holdout ROC-AUC `0.791323` and
+class-1 F1 `0.347014`. Adding advanced recent/domain relational features and
+fold-safe target encodings improved holdout ROC-AUC to `0.794353` and class-1
+F1 to `0.350370`.
 
 ## Project Notes
 
@@ -75,6 +75,12 @@ CatBoost on the same reduced 200-feature set reached validation ROC-AUC
   150/200/250-feature reduction experiments and model-save result.
 - `reports/reduced_model_selection_report.md` contains the CatBoost comparison
   and Optuna-tuned LightGBM result.
+- `reports/advanced_relational_cv_report.md` contains the 3-fold CV check for
+  recent/domain features and fold-safe target encodings.
+- `reports/advanced_feature_pruning_report.md` contains transformed-feature
+  pruning for the advanced feature set.
+- `reports/final_advanced_pruned_holdout_report.md` contains the final advanced
+  pruned holdout result.
 - `requirements.txt` lists the project dependencies, including LightGBM,
   XGBoost, and CatBoost.
 - `requirements-profiling.txt` lists the separate profiling dependency. The
@@ -83,12 +89,11 @@ CatBoost on the same reduced 200-feature set reached validation ROC-AUC
 
 ## Recommended Next Steps
 
-- Use the Optuna-tuned top-200 reduced relational LightGBM model as the current
-  best model.
-- Use threshold `0.656411` for the current balanced classifier, or threshold
+- Use the final advanced pruned LightGBM model as the current best model.
+- Use threshold `0.670438` for the current balanced classifier, or threshold
   `0.5` when higher recall is more important than false positives.
-- Add recent-history window aggregates; tuning alone did not reach `0.80`
-  ROC-AUC.
+- Add more recent-history and trend features; current best is still below
+  `0.80` ROC-AUC.
 - Add recent-history window aggregates, especially for bureau recency,
   installment lateness, previous refusals, and credit-card utilization.
 - Compare tuned LightGBM against CatBoost on the same joined feature matrix.
