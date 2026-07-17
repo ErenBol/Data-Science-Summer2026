@@ -1,0 +1,4 @@
+feature_set,fold,raw_feature_count,transformed_feature_count,roc_auc,average_precision
+advanced_drop_2_plus_second_order,1,332,374,0.7927575153658413,0.2923409002089746
+advanced_drop_2_plus_second_order,2,332,374,0.7924676705996084,0.28673709777368567
+advanced_drop_2_plus_second_order,3,332,374,0.7923300057570717,0.28630911373767504

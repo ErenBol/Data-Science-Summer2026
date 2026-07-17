@@ -1,0 +1,4 @@
+model,fold,transformed_feature_count,roc_auc,average_precision
+lightgbm_advanced_pruned,1,363,0.792999353410389,0.2936818172788159
+lightgbm_advanced_pruned,2,363,0.792493191764397,0.2857309274547891
+lightgbm_advanced_pruned,3,363,0.7921539963426115,0.2847895904594966

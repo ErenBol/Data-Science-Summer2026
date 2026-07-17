@@ -1,0 +1,4 @@
+model,fold,raw_feature_count,categorical_feature_count,best_iteration,roc_auc,average_precision
+native_catboost_categorical,1,316,14,1199,0.7926179851303305,0.2915532749052788
+native_catboost_categorical,2,316,14,1199,0.7937899824234199,0.28698917360324866
+native_catboost_categorical,3,316,14,1199,0.7927645601393395,0.2830592656221019

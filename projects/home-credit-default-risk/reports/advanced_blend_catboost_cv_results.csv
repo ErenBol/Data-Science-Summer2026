@@ -1,0 +1,4 @@
+model,fold,best_iteration,transformed_feature_count,roc_auc,average_precision
+catboost_advanced_drop_2,1,1199,363,0.7920466765431865,0.2904783349426899
+catboost_advanced_drop_2,2,1197,363,0.7921239877179074,0.2851879001560182
+catboost_advanced_drop_2,3,1198,363,0.7915681819260271,0.2819254451862579

@@ -1,0 +1,3 @@
+model,mean_cv_roc_auc,std_cv_roc_auc,mean_cv_average_precision,std_cv_average_precision
+previous_transformed_catboost,0.791913,,,
+native_catboost_categorical,0.7930575092310299,0.0005213820042246149,0.28720057137687643,0.003470885111869415

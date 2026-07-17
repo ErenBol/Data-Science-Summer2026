@@ -481,3 +481,208 @@ def build_credit_card_features(path: str | Path) -> pd.DataFrame:
     result.index.name = "SK_ID_CURR"
 
     return result
+
+
+def _window_sum(
+    data: pd.DataFrame,
+    id_column: str,
+    time_column: str,
+    value_column: str,
+    lower_bound: int,
+) -> pd.Series:
+    recent = data[data[time_column] >= lower_bound]
+
+    return recent.groupby(id_column)[value_column].sum()
+
+
+def _window_mean(
+    data: pd.DataFrame,
+    id_column: str,
+    time_column: str,
+    value_column: str,
+    lower_bound: int,
+) -> pd.Series:
+    recent = data[data[time_column] >= lower_bound]
+
+    return recent.groupby(id_column)[value_column].mean()
+
+
+def build_second_order_recent_history_features(raw_data_dir: str | Path) -> pd.DataFrame:
+    """Build compact second-order recent-history relational features.
+
+    These features compare recent windows rather than summarizing each window
+    independently. They are designed to complement the advanced recent/domain
+    features without adding high-cardinality categorical expansions.
+    """
+
+    raw_data_dir = Path(raw_data_dir)
+    frames = []
+
+    bureau = pd.read_csv(
+        raw_data_dir / "bureau.csv",
+        usecols=["SK_ID_CURR", "DAYS_CREDIT", "AMT_CREDIT_SUM_OVERDUE"],
+    )
+    bureau_overdue_6m = _window_sum(
+        bureau,
+        "SK_ID_CURR",
+        "DAYS_CREDIT",
+        "AMT_CREDIT_SUM_OVERDUE",
+        -180,
+    )
+    bureau_overdue_24m = _window_sum(
+        bureau,
+        "SK_ID_CURR",
+        "DAYS_CREDIT",
+        "AMT_CREDIT_SUM_OVERDUE",
+        -730,
+    )
+    bureau_features = pd.DataFrame(index=bureau.groupby("SK_ID_CURR").size().index)
+    bureau_features["SO_BURO_OVERDUE_SUM_6M_TO_24M_RATIO"] = _safe_divide(
+        bureau_overdue_6m,
+        bureau_overdue_24m,
+    )
+    frames.append(bureau_features)
+
+    credit_card = pd.read_csv(
+        raw_data_dir / "credit_card_balance.csv",
+        usecols=[
+            "SK_ID_CURR",
+            "MONTHS_BALANCE",
+            "AMT_BALANCE",
+            "AMT_CREDIT_LIMIT_ACTUAL",
+        ],
+    )
+    credit_card["SO_CC_UTILIZATION"] = _safe_divide(
+        credit_card["AMT_BALANCE"],
+        credit_card["AMT_CREDIT_LIMIT_ACTUAL"],
+    )
+    cc_current_6m = _window_mean(
+        credit_card,
+        "SK_ID_CURR",
+        "MONTHS_BALANCE",
+        "SO_CC_UTILIZATION",
+        -6,
+    )
+    cc_prior_6m = credit_card[
+        (credit_card["MONTHS_BALANCE"] < -6)
+        & (credit_card["MONTHS_BALANCE"] >= -12)
+    ].groupby("SK_ID_CURR")["SO_CC_UTILIZATION"].mean()
+    cc_features = pd.DataFrame(index=credit_card.groupby("SK_ID_CURR").size().index)
+    cc_features["SO_CC_UTILIZATION_CURRENT6_MINUS_PRIOR6"] = (
+        cc_current_6m - cc_prior_6m
+    )
+    frames.append(cc_features)
+
+    installments = pd.read_csv(
+        raw_data_dir / "installments_payments.csv",
+        usecols=[
+            "SK_ID_CURR",
+            "DAYS_INSTALMENT",
+            "DAYS_ENTRY_PAYMENT",
+        ],
+    )
+    installments["SO_INST_LATE_PAYMENT"] = (
+        installments["DAYS_ENTRY_PAYMENT"] - installments["DAYS_INSTALMENT"] > 0
+    ).astype(np.uint8)
+    inst_late_3m = _window_mean(
+        installments,
+        "SK_ID_CURR",
+        "DAYS_INSTALMENT",
+        "SO_INST_LATE_PAYMENT",
+        -90,
+    )
+    inst_late_6m = _window_mean(
+        installments,
+        "SK_ID_CURR",
+        "DAYS_INSTALMENT",
+        "SO_INST_LATE_PAYMENT",
+        -180,
+    )
+    inst_late_12m = _window_mean(
+        installments,
+        "SK_ID_CURR",
+        "DAYS_INSTALMENT",
+        "SO_INST_LATE_PAYMENT",
+        -365,
+    )
+    inst_features = pd.DataFrame(index=installments.groupby("SK_ID_CURR").size().index)
+    inst_features["SO_INST_LATE_RATE_3M_MINUS_6M"] = inst_late_3m - inst_late_6m
+    inst_features["SO_INST_LATE_RATE_6M_MINUS_12M"] = inst_late_6m - inst_late_12m
+    inst_features["SO_INST_LATE_RATE_ACCEL_3_6_12M"] = (
+        inst_features["SO_INST_LATE_RATE_3M_MINUS_6M"]
+        - inst_features["SO_INST_LATE_RATE_6M_MINUS_12M"]
+    )
+    frames.append(inst_features)
+
+    previous = pd.read_csv(
+        raw_data_dir / "previous_application.csv",
+        usecols=["SK_ID_CURR", "DAYS_DECISION", "NAME_CONTRACT_STATUS"],
+    )
+    previous["SO_PREV_IS_REFUSED"] = (
+        previous["NAME_CONTRACT_STATUS"] == "Refused"
+    ).astype(np.uint8)
+    months_since_decision = (-previous["DAYS_DECISION"] / 30.0).clip(lower=0)
+    previous["SO_PREV_RECENCY_WEIGHT"] = np.exp(-months_since_decision / 12.0)
+    previous["SO_PREV_WEIGHTED_REFUSAL"] = (
+        previous["SO_PREV_IS_REFUSED"] * previous["SO_PREV_RECENCY_WEIGHT"]
+    )
+    previous_grouped = previous.groupby("SK_ID_CURR")
+    prev_features = pd.DataFrame(index=previous_grouped.size().index)
+    prev_features["SO_PREV_RECENCY_WEIGHTED_REFUSAL_RATE"] = _safe_divide(
+        previous_grouped["SO_PREV_WEIGHTED_REFUSAL"].sum(),
+        previous_grouped["SO_PREV_RECENCY_WEIGHT"].sum(),
+    )
+    frames.append(prev_features)
+
+    pos = pd.read_csv(
+        raw_data_dir / "POS_CASH_balance.csv",
+        usecols=["SK_ID_CURR", "MONTHS_BALANCE", "SK_DPD", "SK_DPD_DEF"],
+    )
+    pos["SO_POS_HAS_DPD"] = (pos["SK_DPD"].fillna(0) > 0).astype(np.uint8)
+    pos["SO_POS_HAS_DPD_DEF"] = (pos["SK_DPD_DEF"].fillna(0) > 0).astype(np.uint8)
+    pos_dpd_3m = _window_mean(pos, "SK_ID_CURR", "MONTHS_BALANCE", "SO_POS_HAS_DPD", -3)
+    pos_dpd_6m = _window_mean(pos, "SK_ID_CURR", "MONTHS_BALANCE", "SO_POS_HAS_DPD", -6)
+    pos_dpd_12m = _window_mean(
+        pos,
+        "SK_ID_CURR",
+        "MONTHS_BALANCE",
+        "SO_POS_HAS_DPD",
+        -12,
+    )
+    pos_def_3m = _window_mean(
+        pos,
+        "SK_ID_CURR",
+        "MONTHS_BALANCE",
+        "SO_POS_HAS_DPD_DEF",
+        -3,
+    )
+    pos_def_6m = _window_mean(
+        pos,
+        "SK_ID_CURR",
+        "MONTHS_BALANCE",
+        "SO_POS_HAS_DPD_DEF",
+        -6,
+    )
+    pos_def_12m = _window_mean(
+        pos,
+        "SK_ID_CURR",
+        "MONTHS_BALANCE",
+        "SO_POS_HAS_DPD_DEF",
+        -12,
+    )
+    pos_features = pd.DataFrame(index=pos.groupby("SK_ID_CURR").size().index)
+    pos_features["SO_POS_DPD_RATE_3M_MINUS_6M"] = pos_dpd_3m - pos_dpd_6m
+    pos_features["SO_POS_DPD_RATE_6M_MINUS_12M"] = pos_dpd_6m - pos_dpd_12m
+    pos_features["SO_POS_DPD_RATE_ACCEL_3_6_12M"] = (
+        pos_features["SO_POS_DPD_RATE_3M_MINUS_6M"]
+        - pos_features["SO_POS_DPD_RATE_6M_MINUS_12M"]
+    )
+    pos_features["SO_POS_DPD_DEF_RATE_3M_MINUS_6M"] = pos_def_3m - pos_def_6m
+    pos_features["SO_POS_DPD_DEF_RATE_6M_MINUS_12M"] = pos_def_6m - pos_def_12m
+    frames.append(pos_features)
+
+    result = pd.concat(frames, axis=1)
+    result = result.replace([np.inf, -np.inf], np.nan)
+    result.index.name = "SK_ID_CURR"
+
+    return result
