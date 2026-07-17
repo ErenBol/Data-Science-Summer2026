@@ -1,8 +1,10 @@
 data/raw/*
 data/processed/*
 models/*
+submissions/*.csv
 .profiling-venv/
 
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !models/.gitkeep
+!submissions/README.md
