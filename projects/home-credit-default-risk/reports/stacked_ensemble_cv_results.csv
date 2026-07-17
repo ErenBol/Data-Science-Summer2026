@@ -1,0 +1,4 @@
+model,fold,roc_auc,average_precision
+stacked_logistic_meta,1,0.794572077877129,0.29234226490138715
+stacked_logistic_meta,2,0.7947399981641434,0.2858140763128674
+stacked_logistic_meta,3,0.7945392233044822,0.28522175914429476

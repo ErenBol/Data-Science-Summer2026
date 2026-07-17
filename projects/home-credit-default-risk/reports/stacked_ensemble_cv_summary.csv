@@ -1,0 +1,3 @@
+model,mean_cv_roc_auc,std_cv_roc_auc,mean_cv_average_precision,std_cv_average_precision
+current_50_50_weighted_blend,0.7945306964243702,,0.29086421064864393,
+stacked_logistic_meta,0.7946170997819183,8.793127999041349e-05,0.2877927001195164,0.003226103396294582
