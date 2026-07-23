@@ -1,0 +1,7 @@
+numpy
+matplotlib
+scikit-learn
+jupyter
+torch
+# Optional for Keras sections:
+# tensorflow
